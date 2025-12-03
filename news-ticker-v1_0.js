@@ -11,7 +11,7 @@
 
 console.log("Ticker script loaded");
 
-function startNewsTicker(containerId) {
+function startNewsTicker(containerId, feedUrl) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
@@ -53,8 +53,7 @@ function startNewsTicker(containerId) {
   }
 
   async function loadAndRun() {
-    const FEED_URL = "https://one15one.app.n8n.cloud/webhook/a409a8d6-91aa-468b-ab2f-b5c391cb9df1";
-
+  const FEED_URL = feedUrl;
     try {
       const res = await fetch(FEED_URL, { cache: "no-store" });
       if (!res.ok) throw new Error("Bad response");
