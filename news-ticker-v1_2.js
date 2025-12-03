@@ -53,7 +53,7 @@ function startNewsTicker(containerId, feedUrl) {
   }
 
   async function loadAndRun() {
-  const FEED_URL = feedUrl;
+    const FEED_URL = window.NEWS_TICKER_FEED_URL;
     try {
       const res = await fetch(FEED_URL, { cache: "no-store" });
       if (!res.ok) throw new Error("Bad response");
