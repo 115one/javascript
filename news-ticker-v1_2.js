@@ -5,7 +5,7 @@
          <div id="news-ticker"></div>
     2. Include this script.
     3. Start it by calling:
-         startNewsTicker("news-ticker")
+         startNewsTicker("news-ticker", "https://feedurl.com/x/y/x")
   The script fetches items from your n8n webhook feed and cycles through them.
 */
 
