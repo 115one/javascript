@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Map Items</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+    .popup-table {
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .popup-table td {
+      padding: 2px 4px;
+      vertical-align: top;
+    }
+    .popup-table td.label {
+      font-weight: bold;
+      padding-right: 6px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    const DATA_URL = "https://one15one.app.n8n.cloud/webhook/a409a8d6-91aa-468b-ab2f-b5c391cb9df1";
+
+    const geoCache = {};
+
+    async function geocode(place) {
+      if (geoCache[place]) return geoCache[place];
+
+      const url = "https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(place);
+      const res = await fetch(url, { headers: { "User-Agent": "YourApp" } });
+      const json = await res.json();
+
+      if (!json.length) return null;
+
+      const coords = {
+        lat: parseFloat(json[0].lat),
+        lon: parseFloat(json[0].lon)
+      };
+
+      geoCache[place] = coords;
+      return coords;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function capitalizeFirst(v) {
+      if (!v) return v;
+      return v.charAt(0).toUpperCase() + v.slice(1);
+    }
+
+    function createPopupHtml(item) {
+      const fields = {
+        Date: item.Date,
+        Place: item.Place,
+        Activity: capitalizeFirst(item.Activity),
+        Headline: item.Headline,
+        Summary: item.summary || item.Summary
+      };
+
+      const rows = Object.entries(fields)
+        .map(([k, v]) => `
+          <tr>
+            <td class="label">${escapeHtml(k)}</td>
+            <td>${escapeHtml(v || "")}</td>
+          </tr>
+        `)
+        .join("");
+
+      return `<table class="popup-table">${rows}</table>`;
+    }
+
+    async function init() {
+      const map = L.map("map").setView([20, 0], 2);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors"
+      }).addTo(map);
+
+      const res = await fetch(DATA_URL);
+      const DATA = await res.json();
+
+      for (const item of DATA) {
+        const place = item.Place;
+        if (!place) continue;
+
+        try {
+          const geo = await geocode(place);
+          if (!geo) continue;
+
+          const marker = L.marker([geo.lat, geo.lon]).addTo(map);
+          marker.bindPopup(createPopupHtml(item));
+        } catch (e) {
+          console.error("Geocode error", place, e);
+        }
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
